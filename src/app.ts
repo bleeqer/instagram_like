@@ -1,38 +1,20 @@
 import express, {Application, Request, Response, NextFunction} from 'express'
-import mysql from 'mysql'
+import log from './logger'
+import mongoose from 'mongoose'
+import {config} from './config/config'
 
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '4585',
+mongoose.connect(config.mongo.url, {retryWrites: true, w: 'majority'})
+.then(() => {
+    log.info('connected')
 })
-
-db.connect((err) => {
-    if (err) {
-        throw err
-    }
-    console.log('MySql Connected...')
+.catch((error) => {
+    console.log(error)
 })
 
 const app: Application = express()
 
-// Create DB
-app.get('/createdb', (req, res) => {
-    let sql = 'create database instagramdb'
-    db.query(sql, (err, result) => {
-        if (err) {
-            throw err
-        }
-        console.log(result)
-        res.send('database created...')
-    })
-
-})
-
-const add = (a: number, b: number): number => a + b 
-
 app.get('/', (req: Request, res: Response) => {
-    res.send('Hello')
+    log.info('server running')
 })
 
-app.listen(5000, () => console.log('Server running'))
+app.listen(config.server.port)
