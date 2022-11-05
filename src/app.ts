@@ -2,8 +2,9 @@ import express, {Application, Request, Response, NextFunction} from 'express'
 import mongoose from 'mongoose'
 import {config} from './config/config'
 import logger from './logger/Logger'
+import authorRoutes from './routes/Author'
 
-const router: Application = express()
+const app: Application = express()
 
 
 /* Connect to MongoDB */
@@ -13,14 +14,13 @@ mongoose.connect(config.mongo.url, {retryWrites: true, w: 'majority'})
     startServer()
 })
 .catch((error) => {
-    logger.error('Unable to connect: ')
-    logger.error(error)
+    logger.error(`Unable to connect: ${error}`)
 })
 
 /* Only start the server if Mongo Connects */
 const startServer = () => {
 
-    router.use((req, res, next) => {
+    app.use((req, res, next) => {
     
         /* Log the request */
         logger.info(`Incoming -> Method [${req.method}] - Url: [${req.url}] - IP: [${req.socket.remoteAddress}]`)
@@ -33,6 +33,11 @@ const startServer = () => {
         next()
     })
 
-    // router.use(express.urlencoded({extended: true}))
-    router.use(express.json())
+    // app.use(express.urlencoded({extended: true}))
+    app.use(express.json())
+
+    /* Routes */
+    app.use('/authors', authorRoutes)
+
+    app.listen(config.server.port, () => {logger.info(`Server started on port ${config.server.port}`)})
 }
