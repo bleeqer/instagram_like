@@ -1,20 +1,38 @@
 import express, {Application, Request, Response, NextFunction} from 'express'
-import log from './logger'
 import mongoose from 'mongoose'
 import {config} from './config/config'
+import logger from './logger/Logger'
 
+const router: Application = express()
+
+
+/* Connect to MongoDB */
 mongoose.connect(config.mongo.url, {retryWrites: true, w: 'majority'})
 .then(() => {
-    log.info('connected')
+    logger.info('Connected to mongoDB')
+    startServer()
 })
 .catch((error) => {
-    console.log(error)
+    logger.error('Unable to connect: ')
+    logger.error(error)
 })
 
-const app: Application = express()
+/* Only start the server if Mongo Connects */
+const startServer = () => {
 
-app.get('/', (req: Request, res: Response) => {
-    log.info('server running')
-})
+    router.use((req, res, next) => {
+    
+        /* Log the request */
+        logger.info(`Incoming -> Method [${req.method}] - Url: [${req.url}] - IP: [${req.socket.remoteAddress}]`)
+        
+        res.on('finish', () => {
+            /* Log the response */
+            logger.info(`Incoming -> Method [${req.method}] - Url: [${req.url}] - IP: [${req.socket.remoteAddress}] - Status: [${res.statusCode}]`)
+        })
 
-app.listen(config.server.port)
+        next()
+    })
+
+    // router.use(express.urlencoded({extended: true}))
+    router.use(express.json())
+}
